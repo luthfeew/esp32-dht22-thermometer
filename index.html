@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content =
+        localStorage.getItem('color-scheme') ?? 'light dark';
+    } catch {}
+  </script>
+  <title>ESP32 Thermometer — Riwayat Suhu & Kelembapan</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Monitor Suhu ESP32</h1>
+          <p class="subtitle" id="statusLine">Memuat data sensor...</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button type="button" class="btn btn-secondary" id="refreshBtn" aria-label="Muat ulang data">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+            <polyline points="21 3 21 9 15 9"/>
+          </svg>
+          <span>Segarkan</span>
+        </button>
+        <button type="button" class="btn btn-secondary" id="exportBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Unduh CSV</span>
+        </button>
+        <button type="button" class="btn btn-primary" id="openSettingsBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span>Pengaturan</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="banner" id="modeBanner" hidden>
+      <p id="modeBannerText"></p>
+      <button type="button" class="banner-link" id="bannerConfigBtn">Hubungkan Google Sheets</button>
+    </div>
+
+    <main class="main-content">
+      <!-- Ringkasan KPI -->
+      <section class="kpi-grid" aria-label="Ringkasan sensor terkini">
+        <article class="card kpi-card kpi-temp">
+          <div class="kpi-header">
+            <span class="kpi-label">Suhu Terkini</span>
+            <span class="badge" id="tempBadge">--</span>
+          </div>
+          <div class="kpi-value" id="currentTemp">--.- °C</div>
+          <p class="kpi-meta" id="tempRangeMeta">Min -- °C · Maks -- °C</p>
+        </article>
+
+        <article class="card kpi-card kpi-hum">
+          <div class="kpi-header">
+            <span class="kpi-label">Kelembapan</span>
+            <span class="badge" id="humBadge">--</span>
+          </div>
+          <div class="kpi-value" id="currentHum">--.- %</div>
+          <p class="kpi-meta" id="humRangeMeta">Min -- % · Maks -- %</p>
+        </article>
+
+        <article class="card kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Terasa Seperti</span>
+            <span class="badge badge-neutral" id="deviceBadge">DHT22</span>
+          </div>
+          <div class="kpi-value" id="currentHeatIndex">--.- °C</div>
+          <p class="kpi-meta" id="lastUpdateMeta">Pembaruan terakhir: --</p>
+        </article>
+
+        <article class="card kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Rata-rata Periode</span>
+            <span class="badge badge-neutral" id="countBadge">0 data</span>
+          </div>
+          <div class="kpi-value" id="avgTemp">--.- °C</div>
+          <p class="kpi-meta" id="avgHumMeta">Rata-rata kelembapan: -- %</p>
+        </article>
+      </section>
+
+      <!-- Filter Periode -->
+      <section class="toolbar" aria-label="Filter rentang waktu">
+        <div class="range-group" role="group" aria-label="Pilih rentang histori">
+          <button type="button" class="range-btn active" data-range="24h">24 Jam</button>
+          <button type="button" class="range-btn" data-range="7d">7 Hari</button>
+          <button type="button" class="range-btn" data-range="30d">30 Hari</button>
+          <button type="button" class="range-btn" data-range="all">Semua</button>
+        </div>
+        <p class="toolbar-note" id="syncMeta">Auto-refresh: 5 menit</p>
+      </section>
+
+      <!-- Grafik Riwayat -->
+      <section class="charts-grid" aria-label="Grafik riwayat suhu dan kelembapan">
+        <article class="card chart-card">
+          <div class="card-header">
+            <div>
+              <h2>Riwayat Suhu (°C)</h2>
+              <p class="card-subtitle">Suhu aktual dan estimasi terasa seperti (Heat Index)</p>
+            </div>
+          </div>
+          <div class="chart-box">
+            <canvas id="tempChart" aria-label="Grafik riwayat suhu"></canvas>
+          </div>
+        </article>
+
+        <article class="card chart-card">
+          <div class="card-header">
+            <div>
+              <h2>Riwayat Kelembapan (%)</h2>
+              <p class="card-subtitle">Kelembapan relatif udara dari sensor DHT22</p>
+            </div>
+          </div>
+          <div class="chart-box">
+            <canvas id="humChart" aria-label="Grafik riwayat kelembapan"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <!-- Tabel Riwayat Terbaru -->
+      <section class="card table-card" aria-label="Tabel catatan terbaru">
+        <div class="card-header">
+          <div>
+            <h2>Catatan Terbaru</h2>
+            <p class="card-subtitle" id="tableSummary">Menampilkan maksimal 50 pencatatan terakhir</p>
+          </div>
+        </div>
+
+        <div tabindex="0" role="region" aria-labelledby="history-table-caption" class="table-wrapper">
+          <table class="history-table">
+            <caption id="history-table-caption" class="sr-only">
+              Tabel riwayat pencatatan suhu, kelembapan, dan heat index dari ESP32 DHT22
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Waktu</th>
+                <th scope="col">Suhu (°C)</th>
+                <th scope="col">Kelembapan (%)</th>
+                <th scope="col">Terasa Seperti (°C)</th>
+                <th scope="col">Perangkat</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <tr>
+                <td colspan="5" class="empty-cell">Belum ada data untuk ditampilkan.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal Pengaturan -->
+  <dialog id="settingsDialog" closedby="any" aria-labelledby="settingsTitle">
+    <form id="settingsForm" class="dialog-panel">
+      <div class="dialog-header">
+        <h2 id="settingsTitle">Pengaturan Dashboard</h2>
+        <button type="button" class="icon-btn" id="closeSettingsBtn" aria-label="Tutup pengaturan">✕</button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="field">
+          <label for="apiUrlInput">URL Web App Google Apps Script</label>
+          <input
+            type="url"
+            id="apiUrlInput"
+            name="apiUrl"
+            placeholder="https://script.google.com/macros/s/.../exec"
+            autocomplete="off"
+          >
+          <small class="field-hint">
+            Kosongkan jika ingin melihat <strong>Mode Demo</strong>. Setelah deploy <code>Code.gs</code>, tempel URL <code>/exec</code> di sini.
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="refreshIntervalSelect">Interval Auto-Refresh Dashboard</label>
+          <select id="refreshIntervalSelect" name="refreshInterval">
+            <option value="0">Mati (manual saja)</option>
+            <option value="60000">Setiap 1 menit</option>
+            <option value="300000">Setiap 5 menit (default)</option>
+            <option value="900000">Setiap 15 menit</option>
+          </select>
+        </div>
+
+        <fieldset class="field theme-fieldset">
+          <legend>Tema Tampilan</legend>
+          <div class="theme-options">
+            <label class="radio-card">
+              <input type="radio" name="colorScheme" value="system">
+              <span id="systemThemeLabel">Sistem</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="colorScheme" value="light">
+              <span>Terang</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="colorScheme" value="dark">
+              <span>Gelap</span>
+            </label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan & Muat Data</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
