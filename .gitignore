@@ -1,0 +1,10 @@
+# PlatformIO build & local artifacts
+firmware/.pio/
+firmware/.vscode/
+firmware/include/secrets.h
+
+# OS / Editor / Local caches
+.DS_Store
+Thumbs.db
+*.log
+.impeccable/
