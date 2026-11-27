@@ -88,7 +88,7 @@ bool sendToGoogleSheets(float temperatureC, float humidity, float heatIndexC) {
   HTTPClient http;
   // Google Apps Script memproses doPost lalu merespons 302 redirect ke URL hasil (GET).
   // Kita matikan auto-redirect saat POST, lalu lakukan GET manual ke header Location untuk verifikasi.
-  http.setFollowRedirects(HTTPC_DISABLE_REDIRECTS);
+  http.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
   http.setTimeout(15000);
 
   const char *headerKeys[] = {"Location"};
