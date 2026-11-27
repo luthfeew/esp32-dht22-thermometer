@@ -17,8 +17,8 @@
     tempMax: 28,
     humMin: 40,
     humMax: 65,
-    staleMinutes: 15,
-    offlineMinutes: 60
+    staleMinutes: 5,
+    offlineMinutes: 30
   };
 
   const STORAGE_KEYS = {
@@ -44,7 +44,7 @@
   const state = {
     apiUrl: resolveInitialApiUrl(),
     sheetUrl: readStorage(STORAGE_KEYS.sheetUrl) || '',
-    refreshMs: Number(readStorage(STORAGE_KEYS.refreshMs) ?? 300000),
+    refreshMs: Number(readStorage(STORAGE_KEYS.refreshMs) ?? 60000),
     range: resolveInitialRange(),
     readings: [],
     isDemo: false,
@@ -419,7 +419,7 @@
 
       state.apiUrl = url;
       state.sheetUrl = sheetUrl;
-      state.refreshMs = Number.isFinite(refreshMs) ? refreshMs : 300000;
+      state.refreshMs = Number.isFinite(refreshMs) ? refreshMs : 60000;
 
       writeStorage(STORAGE_KEYS.apiUrl, url === '' ? DEMO_SENTINEL : url);
       writeStorage(STORAGE_KEYS.sheetUrl, sheetUrl);
@@ -636,7 +636,7 @@
       } else if (freshness.state === 'stale') {
         setStatusIndicator('stale', `${deviceLabel} · Tertunda ${freshness.ageText} (${freshness.timeText})`);
         showBanner({
-          text: `Data terakhir masuk ${freshness.ageText} (${freshness.timeText}), melewati interval rutin 5 menit.`,
+          text: `Data terakhir masuk ${freshness.ageText} (${freshness.timeText}), melewati interval rutin 1 menit.`,
           primaryLabel: 'Segarkan',
           onPrimary: () => loadData()
         });

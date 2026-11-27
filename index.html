@@ -72,7 +72,7 @@
       <section class="card now-panel" id="nowPanel" data-loading="true" aria-label="Kondisi ruangan saat ini">
         <div class="now-header">
           <h2 class="verdict-text" id="comfortVerdict">Memeriksa kondisi ruangan...</h2>
-          <p class="hardware-note">Sensor DHT22 (±0,5 °C) · Interval catat 5 menit</p>
+          <p class="hardware-note">Sensor DHT22 (±0,5 °C) · Interval catat 1 menit</p>
         </div>
 
         <div class="readings-strip">
@@ -125,7 +125,7 @@
           </div>
 
           <div class="toolbar-right">
-            <span class="toolbar-note" id="syncMeta">Auto-refresh: setiap 5 menit</span>
+            <span class="toolbar-note" id="syncMeta">Auto-refresh: setiap 1 menit</span>
             <a id="sheetLink" class="text-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Buka Google Sheets ↗</a>
           </div>
         </div>
@@ -261,8 +261,8 @@
           <label for="refreshIntervalSelect">Interval Pembaruan Otomatis</label>
           <select id="refreshIntervalSelect" name="refreshInterval">
             <option value="0">Mati (manual saja)</option>
-            <option value="60000">Setiap 1 menit</option>
-            <option value="300000">Setiap 5 menit (default)</option>
+            <option value="60000">Setiap 1 menit (default)</option>
+            <option value="300000">Setiap 5 menit</option>
             <option value="900000">Setiap 15 menit</option>
           </select>
         </div>
