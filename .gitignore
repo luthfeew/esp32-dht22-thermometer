@@ -7,4 +7,5 @@ firmware/include/secrets.h
 .DS_Store
 Thumbs.db
 *.log
-.impeccable/
+.impeccable/hook.cache.json
+.impeccable/config.local.json
