@@ -6,7 +6,7 @@
    * supaya langsung terhubung tanpa perlu isi di Pengaturan, tempel URL
    * Google Apps Script (/exec) kamu di sini.
    */
-  const DEFAULT_API_URL = '';
+  const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxM5JHSqdi9N0BpB0WRbd1P23g-DnJ3IDjv392ycc2BpIOWCQPHxJEklDP9htni4LnZ2Q/exec';
 
   const STORAGE_KEYS = {
     apiUrl: 'esp32_dht22_api_url',
