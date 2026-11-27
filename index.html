@@ -10,7 +10,7 @@
         localStorage.getItem('color-scheme') ?? 'light dark';
     } catch {}
   </script>
-  <title>ESP32 Thermometer — Riwayat Suhu & Kelembapan</title>
+  <title>Iklim Kamar ESP32 — Riwayat Suhu & Kelembapan</title>
   <link rel="stylesheet" href="./styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
   <script src="./app.js" defer></script>
@@ -24,21 +24,24 @@
             <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
           </svg>
         </div>
-        <div>
-          <h1>Monitor Suhu ESP32</h1>
-          <p class="subtitle" id="statusLine">Memuat data sensor...</p>
+        <div class="brand-copy">
+          <h1 id="pageTitle">Iklim Kamar · ESP32</h1>
+          <p class="subtitle" id="statusLine" aria-live="polite">
+            <span class="status-dot" id="statusDot" aria-hidden="true"></span>
+            <span id="statusText">Memuat data sensor...</span>
+          </p>
         </div>
       </div>
 
       <div class="topbar-actions">
-        <button type="button" class="btn btn-secondary" id="refreshBtn" aria-label="Muat ulang data">
+        <button type="button" class="btn btn-secondary" id="refreshBtn" title="Segarkan data (R)">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
             <polyline points="21 3 21 9 15 9"/>
           </svg>
           <span>Segarkan</span>
         </button>
-        <button type="button" class="btn btn-secondary" id="exportBtn">
+        <button type="button" class="btn btn-secondary" id="exportBtn" disabled title="Unduh CSV periode aktif">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
@@ -46,7 +49,7 @@
           </svg>
           <span>Unduh CSV</span>
         </button>
-        <button type="button" class="btn btn-primary" id="openSettingsBtn">
+        <button type="button" class="btn btn-secondary" id="openSettingsBtn" title="Buka pengaturan">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -56,87 +59,127 @@
       </div>
     </header>
 
-    <div class="banner" id="modeBanner" hidden>
-      <p id="modeBannerText"></p>
-      <button type="button" class="banner-link" id="bannerConfigBtn">Hubungkan Google Sheets</button>
+    <div class="banner" id="modeBanner" role="status" hidden>
+      <p class="banner-text" id="modeBannerText"></p>
+      <div class="banner-actions">
+        <button type="button" class="banner-btn" id="bannerPrimaryBtn">Coba Lagi</button>
+        <button type="button" class="banner-btn" id="bannerSecondaryBtn" hidden>Pengaturan</button>
+      </div>
     </div>
 
     <main class="main-content">
-      <!-- Ringkasan KPI -->
-      <section class="kpi-grid" aria-label="Ringkasan sensor terkini">
-        <article class="card kpi-card kpi-temp">
-          <div class="kpi-header">
-            <span class="kpi-label">Suhu Terkini</span>
-            <span class="badge" id="tempBadge">--</span>
-          </div>
-          <div class="kpi-value" id="currentTemp">--.- °C</div>
-          <p class="kpi-meta" id="tempRangeMeta">Min -- °C · Maks -- °C</p>
-        </article>
-
-        <article class="card kpi-card kpi-hum">
-          <div class="kpi-header">
-            <span class="kpi-label">Kelembapan</span>
-            <span class="badge" id="humBadge">--</span>
-          </div>
-          <div class="kpi-value" id="currentHum">--.- %</div>
-          <p class="kpi-meta" id="humRangeMeta">Min -- % · Maks -- %</p>
-        </article>
-
-        <article class="card kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-label">Terasa Seperti</span>
-            <span class="badge badge-neutral" id="deviceBadge">DHT22</span>
-          </div>
-          <div class="kpi-value" id="currentHeatIndex">--.- °C</div>
-          <p class="kpi-meta" id="lastUpdateMeta">Pembaruan terakhir: --</p>
-        </article>
-
-        <article class="card kpi-card">
-          <div class="kpi-header">
-            <span class="kpi-label">Rata-rata Periode</span>
-            <span class="badge badge-neutral" id="countBadge">0 data</span>
-          </div>
-          <div class="kpi-value" id="avgTemp">--.- °C</div>
-          <p class="kpi-meta" id="avgHumMeta">Rata-rata kelembapan: -- %</p>
-        </article>
-      </section>
-
-      <!-- Filter Periode -->
-      <section class="toolbar" aria-label="Filter rentang waktu">
-        <div class="range-group" role="group" aria-label="Pilih rentang histori">
-          <button type="button" class="range-btn active" data-range="24h">24 Jam</button>
-          <button type="button" class="range-btn" data-range="7d">7 Hari</button>
-          <button type="button" class="range-btn" data-range="30d">30 Hari</button>
-          <button type="button" class="range-btn" data-range="all">Semua</button>
+      <!-- Kondisi Saat Ini -->
+      <section class="card now-panel" id="nowPanel" data-loading="true" aria-label="Kondisi ruangan saat ini">
+        <div class="now-header">
+          <h2 class="verdict-text" id="comfortVerdict">Memeriksa kondisi ruangan...</h2>
+          <p class="hardware-note">Sensor DHT22 (±0,5 °C) · Interval catat 5 menit</p>
         </div>
-        <p class="toolbar-note" id="syncMeta">Auto-refresh: 5 menit</p>
+
+        <div class="readings-strip">
+          <div class="reading-item reading-temp">
+            <div class="reading-head">
+              <span class="reading-label">Suhu Aktual</span>
+              <span class="badge" id="tempBadge">--</span>
+            </div>
+            <div class="reading-value-wrap">
+              <span class="reading-value" id="currentTemp">--.- °C</span>
+              <span class="skeleton-bar" aria-hidden="true"></span>
+            </div>
+            <p class="reading-meta">Zona nyaman: 22–28 °C</p>
+          </div>
+
+          <div class="reading-item reading-hum">
+            <div class="reading-head">
+              <span class="reading-label">Kelembapan</span>
+              <span class="badge" id="humBadge">--</span>
+            </div>
+            <div class="reading-value-wrap">
+              <span class="reading-value" id="currentHum">--.- %</span>
+              <span class="skeleton-bar" aria-hidden="true"></span>
+            </div>
+            <p class="reading-meta">Zona ideal: 40–65%</p>
+          </div>
+
+          <div class="reading-item reading-heat">
+            <div class="reading-head">
+              <span class="reading-label">Terasa Seperti</span>
+              <span class="badge">Indeks Panas</span>
+            </div>
+            <div class="reading-value-wrap">
+              <span class="reading-value reading-value-secondary" id="currentHeatIndex">--.- °C</span>
+              <span class="skeleton-bar" aria-hidden="true"></span>
+            </div>
+            <p class="reading-meta" id="lastReadingMeta">Terakhir dicatat: --</p>
+          </div>
+        </div>
       </section>
 
-      <!-- Grafik Riwayat -->
-      <section class="charts-grid" aria-label="Grafik riwayat suhu dan kelembapan">
-        <article class="card chart-card">
-          <div class="card-header">
-            <div>
-              <h2>Riwayat Suhu (°C)</h2>
-              <p class="card-subtitle">Suhu aktual dan estimasi terasa seperti (Heat Index)</p>
-            </div>
+      <!-- Tren & Evaluasi Periode -->
+      <section class="trends-section" aria-label="Tren dan evaluasi periode">
+        <div class="toolbar">
+          <div class="range-group" role="group" aria-label="Pilih rentang histori">
+            <button type="button" class="range-btn active" data-range="24h" aria-pressed="true" title="24 Jam (1)">24 Jam</button>
+            <button type="button" class="range-btn" data-range="7d" aria-pressed="false" title="7 Hari (2)">7 Hari</button>
+            <button type="button" class="range-btn" data-range="30d" aria-pressed="false" title="30 Hari (3)">30 Hari</button>
+            <button type="button" class="range-btn" data-range="all" aria-pressed="false" title="Semua data (4)">Semua</button>
           </div>
-          <div class="chart-box">
-            <canvas id="tempChart" aria-label="Grafik riwayat suhu"></canvas>
-          </div>
-        </article>
 
-        <article class="card chart-card">
-          <div class="card-header">
-            <div>
-              <h2>Riwayat Kelembapan (%)</h2>
-              <p class="card-subtitle">Kelembapan relatif udara dari sensor DHT22</p>
+          <div class="toolbar-right">
+            <span class="toolbar-note" id="syncMeta">Auto-refresh: setiap 5 menit</span>
+            <a id="sheetLink" class="text-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Buka Google Sheets ↗</a>
+          </div>
+        </div>
+
+        <div class="card period-strip" aria-label="Ringkasan periode aktif">
+          <div class="period-item">
+            <span class="period-label" id="periodTempLabel">Suhu (24 Jam)</span>
+            <span class="period-value" id="periodTempSummary">Min -- · Rata-rata -- · Maks --</span>
+          </div>
+          <div class="period-item">
+            <span class="period-label" id="periodHumLabel">Kelembapan (24 Jam)</span>
+            <span class="period-value" id="periodHumSummary">Min -- · Rata-rata -- · Maks --</span>
+          </div>
+          <div class="period-item">
+            <span class="period-label">Kenyamanan Periode</span>
+            <span class="period-value" id="periodCountSummary">0 catatan · --% di zona nyaman</span>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <article class="card chart-card">
+            <div class="card-header">
+              <div>
+                <h2>Riwayat Suhu (°C)</h2>
+                <p class="card-subtitle">Area hijau menandai zona nyaman 22–28 °C</p>
+              </div>
             </div>
-          </div>
-          <div class="chart-box">
-            <canvas id="humChart" aria-label="Grafik riwayat kelembapan"></canvas>
-          </div>
-        </article>
+            <div class="chart-box">
+              <canvas id="tempChart" role="img" aria-label="Grafik riwayat suhu terhadap zona nyaman"></canvas>
+              <div class="chart-skeleton" id="tempSkeleton" aria-hidden="true"></div>
+              <div class="chart-empty" id="tempEmpty" hidden>
+                <p class="chart-empty-text">Belum ada data suhu pada periode ini.</p>
+                <button type="button" class="btn btn-secondary chart-empty-btn" hidden>Lihat 7 Hari</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="card chart-card">
+            <div class="card-header">
+              <div>
+                <h2>Riwayat Kelembapan (%)</h2>
+                <p class="card-subtitle">Area hijau menandai kelembapan ideal 40–65%</p>
+              </div>
+            </div>
+            <div class="chart-box">
+              <canvas id="humChart" role="img" aria-label="Grafik riwayat kelembapan terhadap zona ideal"></canvas>
+              <div class="chart-skeleton" id="humSkeleton" aria-hidden="true"></div>
+              <div class="chart-empty" id="humEmpty" hidden>
+                <p class="chart-empty-text">Belum ada data kelembapan pada periode ini.</p>
+                <button type="button" class="btn btn-secondary chart-empty-btn" hidden>Lihat 7 Hari</button>
+              </div>
+            </div>
+          </article>
+        </div>
       </section>
 
       <!-- Tabel Riwayat Terbaru -->
@@ -144,18 +187,18 @@
         <div class="card-header">
           <div>
             <h2>Catatan Terbaru</h2>
-            <p class="card-subtitle" id="tableSummary">Menampilkan maksimal 50 pencatatan terakhir</p>
+            <p class="card-subtitle" id="tableSummary">Menunggu data sensor...</p>
           </div>
         </div>
 
         <div tabindex="0" role="region" aria-labelledby="history-table-caption" class="table-wrapper">
           <table class="history-table">
             <caption id="history-table-caption" class="sr-only">
-              Tabel riwayat pencatatan suhu, kelembapan, dan heat index dari ESP32 DHT22
+              Tabel riwayat pencatatan suhu, kelembapan, dan terasa seperti dari ESP32 DHT22
             </caption>
             <thead>
               <tr>
-                <th scope="col">Waktu</th>
+                <th scope="col">Waktu (WIB)</th>
                 <th scope="col">Suhu (°C)</th>
                 <th scope="col">Kelembapan (%)</th>
                 <th scope="col">Terasa Seperti (°C)</th>
@@ -163,8 +206,8 @@
               </tr>
             </thead>
             <tbody id="historyTableBody">
-              <tr>
-                <td colspan="5" class="empty-cell">Belum ada data untuk ditampilkan.</td>
+              <tr class="empty-row">
+                <td colspan="5" class="empty-cell">Memuat riwayat pencatatan...</td>
               </tr>
             </tbody>
           </table>
@@ -175,7 +218,7 @@
 
   <!-- Modal Pengaturan -->
   <dialog id="settingsDialog" closedby="any" aria-labelledby="settingsTitle">
-    <form id="settingsForm" class="dialog-panel">
+    <form id="settingsForm" class="dialog-panel" novalidate>
       <div class="dialog-header">
         <h2 id="settingsTitle">Pengaturan Dashboard</h2>
         <button type="button" class="icon-btn" id="closeSettingsBtn" aria-label="Tutup pengaturan">✕</button>
@@ -183,7 +226,7 @@
 
       <div class="dialog-body">
         <div class="field">
-          <label for="apiUrlInput">URL Web App Google Apps Script</label>
+          <label for="apiUrlInput">URL Data Sensor (Google Apps Script)</label>
           <input
             type="url"
             id="apiUrlInput"
@@ -191,13 +234,31 @@
             placeholder="https://script.google.com/macros/s/.../exec"
             autocomplete="off"
           >
+          <p class="field-error" id="apiUrlError" role="alert" hidden></p>
+          <div class="field-hint-row">
+            <small class="field-hint">
+              Kosongkan untuk menjalankan <strong>Mode Demo</strong>. Untuk sensor asli, tempel URL layanan web yang berakhiran <code>/exec</code>.
+            </small>
+            <button type="button" class="text-link" id="useDefaultUrlBtn" hidden>Pakai URL bawaan</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="sheetUrlInput">Tautan Google Sheets (Opsional)</label>
+          <input
+            type="url"
+            id="sheetUrlInput"
+            name="sheetUrl"
+            placeholder="https://docs.google.com/spreadsheets/d/..."
+            autocomplete="off"
+          >
           <small class="field-hint">
-            Kosongkan jika ingin melihat <strong>Mode Demo</strong>. Setelah deploy <code>Code.gs</code>, tempel URL <code>/exec</code> di sini.
+            Jika diisi, tautan cepat <strong>Buka Google Sheets</strong> akan muncul di sebelah filter periode.
           </small>
         </div>
 
         <div class="field">
-          <label for="refreshIntervalSelect">Interval Auto-Refresh Dashboard</label>
+          <label for="refreshIntervalSelect">Interval Pembaruan Otomatis</label>
           <select id="refreshIntervalSelect" name="refreshInterval">
             <option value="0">Mati (manual saja)</option>
             <option value="60000">Setiap 1 menit</option>
@@ -227,9 +288,11 @@
 
       <div class="dialog-footer">
         <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">Batal</button>
-        <button type="submit" class="btn btn-primary">Simpan & Muat Data</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
       </div>
     </form>
   </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>
