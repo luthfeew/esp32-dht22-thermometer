@@ -1,6 +1,6 @@
 # ESP32 + DHT22 Thermometer (Google Sheets + Web Dashboard)
 
-Proyek termometer & pencatat kelembapan menggunakan **ESP32 (Type-C)** dan **modul DHT22 3-pin**. Data dikirim otomatis setiap **5 menit** ke **Google Sheets** dan ditampilkan dalam **Web Dashboard grafik interaktif**.
+Proyek termometer & pencatat kelembapan menggunakan **ESP32 (Type-C)** dan **modul DHT22 3-pin**. Data dikirim otomatis setiap **1 menit** ke **Google Sheets** dan ditampilkan dalam **Web Dashboard grafik interaktif**.
 
 ---
 
@@ -62,7 +62,7 @@ Modul **DHT22 3-pin** umumnya sudah memiliki resistor pull-up di PCB-nya. Gunaka
 1. Di VS Code, buka tab **Extensions** (`Ctrl+Shift+X`), cari dan install **PlatformIO IDE** (oleh PlatformIO). Tunggu instalasi selesai, lalu restart VS Code jika diminta.
 2. Buka folder `d:\Project\ESP32\firmware` di VS Code (**File → Open Folder → pilih `firmware`**) supaya ikon Build (✓), Upload (→), dan Serial Monitor (🔌) muncul di status bar bawah VS Code.
 3. Edit file `firmware/include/secrets.h`:
-   * Isi `WIFI_SSID` dan `WIFI_PASSWORD` *(ESP32 hanya mendukung WiFi 2.4 GHz)*.
+   * Isi daftar WiFi pada `PRESET_WIFIS` *(ESP32 hanya mendukung WiFi 2.4 GHz — boleh lebih dari satu)*.
    * Tempel `GOOGLE_SCRIPT_URL` dari langkah 2.
    * Samakan `API_TOKEN` dengan yang ada di `Code.gs`.
 4. Hubungkan ESP32 Type-C ke laptop menggunakan **kabel USB data** (disarankan USB-A ke USB-C).
@@ -70,7 +70,12 @@ Modul **DHT22 3-pin** umumnya sudah memiliki resistor pull-up di PCB-nya. Gunaka
 5. Klik tombol **Upload (→)** di bar bawah VS Code.
    * *(Jika proses upload macet di `Connecting...`, tahan tombol **BOOT** di board ESP32 1–2 detik hingga mulai menulis).*
 6. Klik tombol **Serial Monitor (🔌)** di bar bawah VS Code untuk melihat log pembacaan suhu & status pengiriman ke Google Sheets.
-   * Data pertama langsung dikirim sesaat setelah menyala, lalu otomatis setiap **5 menit**.
+   * Data pertama langsung dikirim sesaat setelah menyala, lalu otomatis setiap **1 menit**.
+
+### Mode Hybrid WiFi (Pindah-Pindah Lokasi Tanpa Laptop)
+* **Otomatis:** ESP32 memindai dan menyambung ke WiFi terkuat yang ada di `PRESET_WIFIS` atau WiFi tambahan yang tersimpan di memori ESP32.
+* **Fallback Captive Portal:** Jika tidak ada satu pun WiFi yang cocok, ESP32 otomatis memancarkan hotspot **`ESP32-Thermometer-Setup`**. Sambungkan HP ke hotspot tersebut → isi WiFi baru, password, dan nama ruangan → klik **Simpan & Hubungkan**. (Jika tidak diatur selama 3 menit, hotspot mati otomatis dan mencoba memindai ulang daftar WiFi).
+* **Trigger Manual:** Tahan tombol **`BOOT`** pada board ESP32 selama **3 detik** kapan saja untuk membuka portal setup WiFi.
 
 ---
 
@@ -91,6 +96,6 @@ Jika ingin dibuka dari HP tanpa perlu tempel URL berulang kali:
 ## Troubleshooting Singkat
 
 * **`[DHT22] Gagal membaca sensor (NaN)`**: Cek kembali kabel `VCC` ke `3V3`, `DAT` ke `GPIO 4`, dan `GND` ke `GND`. Pastikan pin tidak longgar.
-* **WiFi tidak mau terhubung**: Pastikan memakai jaringan **2.4 GHz** (bukan 5 GHz) dan penulisan SSID/password besar-kecilnya persis sama.
+* **WiFi tidak mau terhubung**: Pastikan memakai jaringan **2.4 GHz** (bukan 5 GHz) dan penulisan SSID/password di `PRESET_WIFIS` persis sama. Jika ingin ganti WiFi lewat HP, tahan tombol **`BOOT`** selama **3 detik** lalu sambungkan HP ke hotspot `ESP32-Thermometer-Setup`.
 * **Respons `Token tidak valid`**: Pastikan `API_TOKEN` di `firmware/include/secrets.h` sama persis dengan `API_TOKEN` di `Code.gs`.
 * **Board ESP32-C3 / ESP32-S3**: Jika board Type-C kamu ternyata varian C3/S3 (bukan ESP32-WROOM-32 standar), ubah `board = esp32dev` di `firmware/platformio.ini` (misal ke `esp32-c3-devkitm-1` atau `esp32-s3-devkitc-1`) dan sesuaikan `DHT_PIN` / `STATUS_LED_PIN`.

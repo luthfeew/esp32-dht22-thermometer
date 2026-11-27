@@ -20,13 +20,13 @@ Pemantau suhu & kelembapan pribadi yang 100% gratis tanpa server atau cloud berb
 
 ## Operating Context
 
-Hardware ESP32 DevKit V1 (USB Type-C, CP2102) + DHT22 3-pin (`GPIO 4`) pada WiFi 2.4 GHz mengirim data setiap 5 menit ke Google Apps Script (`google-apps-script/Code.gs`) dan menyimpannya ke Google Sheets (`DataSuhu`), lalu dibaca oleh dashboard statis (`web/`, Chart.js) yang dipublikasikan di GitHub Pages (`https://luthfeew.github.io/esp32-dht22-thermometer/`). Pengembangan memakai VS Code + PlatformIO (`firmware/`) dan Git/GitHub (`main` + `gh-pages`).
+Hardware ESP32 DevKit V1 (USB Type-C, CP2102) + DHT22 3-pin (`GPIO 4`) pada WiFi 2.4 GHz mengirim data setiap 1 menit ke Google Apps Script (`google-apps-script/Code.gs`) dan menyimpannya ke Google Sheets (`DataSuhu`), lalu dibaca oleh dashboard statis (`web/`, Chart.js) yang dipublikasikan di GitHub Pages (`https://luthfeew.github.io/esp32-dht22-thermometer/`). Pengembangan memakai VS Code + PlatformIO (`firmware/`) dan Git/GitHub (`main` + `gh-pages`).
 
 ## Capabilities and Constraints
 
 - Wajib tetap sederhana, ringan, dan 100% gratis (static HTML/CSS/JS di GitHub Pages + Google Sheets/Apps Script, tanpa biaya server/cloud).
 - Bahasa UI utama: Bahasa Indonesia (`id-ID`, zona waktu `Asia/Jakarta` / WIB).
-- Karakteristik hardware: akurasi bawaan DHT22 ±0.5 °C dan ±2–5% RH; interval pencatatan default 5 menit.
+- Karakteristik hardware: akurasi bawaan DHT22 ±0.5 °C dan ±2–5% RH; interval pencatatan default 1 menit.
 - Keamanan: URL Web App `/exec` bersifat publik *read-only* untuk `GET`, sedangkan `API_TOKEN` untuk `POST` tetap rahasia di `firmware/include/secrets.h` (di-ignore Git) dan `Code.gs`.
 - Belum ditetapkan (keputusan terbuka): ambang batas peringatan suhu/kelembapan kustom dan mekanisme notifikasi proaktif (di halaman vs kanal luar) untuk pengembangan fitur peringatan batas nyaman.
 
@@ -42,4 +42,4 @@ Hardware ESP32 DevKit V1 (USB Type-C, CP2102) + DHT22 3-pin (`GPIO 4`) pada WiFi
 1. Sekilas langsung terbaca: kondisi saat ini, status kenyamanan, dan tren harus cepat dipahami di HP maupun laptop.
 2. Ringan dan nol biaya operasional: setiap peningkatan tetap berjalan di arsitektur statis + Google Sheets gratis.
 3. Kepemilikan penuh atas data: histori mudah ditinjau, diekspor (CSV / Google Sheets), dan dianalisis untuk evaluasi nyata seperti pemakaian AC.
-4. Jujur terhadap keterbatasan perangkat: tampilkan waktu pembaruan terakhir, status koneksi/demo, dan keterbacaan jeda pencatatan 5 menit apa adanya.
+4. Jujur terhadap keterbatasan perangkat: tampilkan waktu pembaruan terakhir, status koneksi/demo, dan keterbacaan jeda pencatatan 1 menit apa adanya.
